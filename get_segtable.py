@@ -2,6 +2,7 @@
 import argparse
 import json
 import ntpath
+import math
 
 from mrcrowbar import models as mrc, utils
 from mrcrowbar.lib.hardware import ibm_pc
@@ -46,7 +47,7 @@ def get_module_table( memory_map, offset ):
 LDT_BASE, LDT_LIMIT = 0x80BAD000, 0x2FFF
 
 DESCRIPTION = 'Extract the Win16 segment table from a DOSBox memory dump.'
-EPILOG = """Windows 3.1 uses a single shared segment table for all programs. In order to use the DOSBox debugger, you will need to know which 16-bit selector maps to each segment in the target EXE or DLL. This tool scrapes this mapping from DOSBox memory dumps taken with a running application.
+EPILOG = """Windows 3.1 uses a single shared segment table for all programs. In order to use the DOSBox debugger, you will need to know the mapping from 16-bit selectors (as seen in the CS/DS registers) to each segment in the target EXE or DLL. This tool scrapes this mapping from DOSBox memory dumps taken with a running application. In addition, a guess is provided for the segment ID and fake 32-bit offset that IDA Pro would use.
 """
 
 if __name__ == '__main__':
@@ -77,17 +78,22 @@ if __name__ == '__main__':
 
     #seg_map = {}
     seg_list = []
+    ida_offset = 0
     for i, s in enumerate( modtable.ne_header.segtable ):
         ss = ldt_dir.seglist[s.selector >> 3]
         seg_list.append( {
             'index': i,
-            'dosbox_selector': '{:04x}'.format( s.selector | 7 ).upper(),
-            'ida_selector': '{}seg{:02}'.format( 'c' if ss.code_seg else 'd', i+1 ),
+            'selector': '{:04x}'.format( s.selector | 7 ).upper(),
             'base': '0x{:08x}'.format( ss.base ),
             'limit': '0x{:05x}'.format( ss.limit ),
             'is_code_segment': bool( ldt_dir.seglist[s.selector >> 3].code_seg ),
             'is_present': bool( ldt_dir.seglist[s.selector >> 3].present ),
+            'size': s.size,
+            'alloc_size': s.alloc_size,
+            'ida_selector': '{}seg{:02}'.format( 'c' if ss.code_seg else 'd', i+1 ),
+            'ida_offset': ida_offset
         } )
+        ida_offset += math.ceil( s.alloc_size/16 )*16
     result = {
         'module': ntpath.split( module_path )[1],
         'module_path': module_path,
