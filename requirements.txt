@@ -1,1 +1,1 @@
-mrcrowbar==0.6.1
+mrcrowbar==0.7.1

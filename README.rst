@@ -28,7 +28,7 @@ Win16 editions of Macromedia Director and Macromedia Projector were linked with 
 - The relocations are stored in a completely different format to a standard Win16 executable.
 - The combination of on-demand loading, hundreds of segments, and hundreds of relocations per segment, makes it near impossible to extract a working Win16 executable from a memory dump.
 
-All of these made Macromedia Director a royal pain to reverse engineer. After a few unsuccessful attempts to rip a program from memory, I settled for modelling as much of the Win16 NE file specification in `Mr. Crowbar <https://moral.net.au/mrcrowbar>`_ as humanly possible. As it turns out, NE is an absolutely bonkers format that uses every addressing scheme and data structure under the sun, so I think I came out very slightly ahead in terms of effort vs. cutting up the file by hand.
+All of these made Macromedia Director a royal pain to reverse engineer. After a few unsuccessful attempts to rip a program from memory, I settled for modelling as much of the Win16 NE file specification in `Mr. Crowbar <https://moral.net.au/mrcrowbar>`_ as humanly possible. As it turns out NE is an absolutely bonkers format that uses every addressing scheme and data structure under the sun, so I think I came out very slightly ahead in terms of effort vs. cutting up the file by hand.
 
 optloader.py does the following:
 
