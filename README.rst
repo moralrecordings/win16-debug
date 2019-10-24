@@ -7,7 +7,7 @@ get_segtable.py
 
 Windows 3.1 uses a single shared segment table for all programs. In order to use the DOSBox debugger, you will need to know the mapping from 16-bit selectors (as seen in the CS/DS registers) to each segment in the target EXE or DLL. This tool scrapes this mapping from DOSBox memory dumps taken with a running application, and provides the segment map information as JSON. In addition, a guess is provided for the segment ID and fake 32-bit offset that IDA Pro would use.
 
-convery_log.py
+convert_log.py
 ==============
 
 CPU coverage logging for DOSBox is available as a `patch <https://sourceforge.net/p/dosbox/patches/282/>`_.
