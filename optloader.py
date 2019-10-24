@@ -93,8 +93,8 @@ def optloader_precopy(data, start_offset, precopy_offset, precopy_size):
         data[di] = data[si]
         di -= 1
         si -= 1
-    print('INITIAL COPY: data[0x{:04x}:0x{:04x}] = data[0x{:04x}:0x{:04x}]'.format(di+1, di+1+cx, si+1, si+1+cx))
-    utils.hexdump(data)
+    #print('INITIAL COPY: data[0x{:04x}:0x{:04x}] = data[0x{:04x}:0x{:04x}]'.format(di+1, di+1+cx, si+1, si+1+cx))
+    #utils.hexdump(data)
 
 
 
@@ -298,22 +298,22 @@ def optloader_get_relocs( raw, relocs_offset, relocs_count ):
     result.reltable = []
 
 
-    print('relocs_count: {}'.format(relocs_count))
+    #print('relocs_count: {}'.format(relocs_count))
     while relocs_count > 0:
-        print('START - si: {:04x}'.format(si))
+        #print('START - si: {:04x}'.format(si))
         al = raw[si]
         ah = raw[si+1]
         si += 2
         num_items = ah
         relocs_count -= num_items
-        print('relocs_count: {} ({})'.format(relocs_count, -num_items))
+        #print('relocs_count: {} ({})'.format(relocs_count, -num_items))
         if al == 0xf0:
             # special base type
-            print('BASE TYPE')
+            #print('BASE TYPE')
             for i in range( num_items ):
                 al = raw[si]
                 di = utils.from_uint16_le( raw[si+1:si+3] )
-                print( 'al: {:02x}, di: {:04x}'.format( al, di ) )
+                #print( 'al: {:02x}, di: {:04x}'.format( al, di ) )
                 si += 3
                 reloc = win16.Relocation( parent=result )
                 reloc.address_type = win16.RelocationAddressType.SELECTOR_16
@@ -324,10 +324,10 @@ def optloader_get_relocs( raw, relocs_offset, relocs_count ):
                 result.reltable.append( reloc )
         else:
             tgt_type = al & 0x7
-            print('target type: {:02x}'.format(tgt_type) )
+            #print('target type: {:02x}'.format(tgt_type) )
 
             src_type = (al >> 3) & 0x3
-            print('source type: {:02x}'.format(src_type) )
+            #print('source type: {:02x}'.format(src_type) )
             
             TGT_TYPES = [
                 win16.RelocationAddressType.LOW_BYTE,
@@ -341,10 +341,10 @@ def optloader_get_relocs( raw, relocs_offset, relocs_count ):
             reloc_base.additive = 1 if (tgt_type & 4) else 0
 
             if src_type == 0x00:
-                print('RELOC_SRC_INTERNAL')
+                #print('RELOC_SRC_INTERNAL')
                 al = raw[si]
                 si += 1
-                print('seg ID: {}'.format(al))
+                #print('seg ID: {}'.format(al))
                 if al != 0xff:
                     loops = 1
                 else:
@@ -354,7 +354,7 @@ def optloader_get_relocs( raw, relocs_offset, relocs_count ):
                     di = utils.from_uint16_le( raw[si:si+2] )
                     dx = utils.from_uint16_le( raw[si+2:si+4] )
                     si += 4
-                    print('di: {:04x}, dx: {:04x}'.format(di, dx))
+                    #print('di: {:04x}, dx: {:04x}'.format(di, dx))
                     # call the target func
                     new_reloc = win16.Relocation( reloc_base, parent=result )
                     new_reloc.detail_type = win16.RelocationDetail.INTERNAL_REF
@@ -365,15 +365,15 @@ def optloader_get_relocs( raw, relocs_offset, relocs_count ):
 
 
             elif src_type == 0x01:
-                print('RELOC_SRC_ORDINAL')
+                #print('RELOC_SRC_ORDINAL')
                 ax = utils.from_uint16_le( raw[si:si+2] )
-                print('modref ID: {}'.format(ax))
+                #print('modref ID: {}'.format(ax))
                 si += 2
                 for i in range( num_items ):
                     di = utils.from_uint16_le( raw[si:si+2] )
                     dx = utils.from_uint16_le( raw[si+2:si+4] )
                     si += 4
-                    print('di: {:04x}, dx: {:04x}'.format(di, dx))
+                    #print('di: {:04x}, dx: {:04x}'.format(di, dx))
                     # call the target func
                     new_reloc = win16.Relocation( reloc_base, parent=result )
                     new_reloc.detail_type = win16.RelocationDetail.IMPORT_ORDINAL
@@ -385,15 +385,15 @@ def optloader_get_relocs( raw, relocs_offset, relocs_count ):
 
 
             elif src_type == 0x02:
-                print('RELOC_SRC_NAME')
+                #print('RELOC_SRC_NAME')
                 ax = utils.from_uint16_le( raw[si:si+2] )
-                print('modref ID: {}'.format(ax))
+                #print('modref ID: {}'.format(ax))
                 si += 2
                 for i in range( num_items ):
                     di = utils.from_uint16_le( raw[si:si+2] )
                     bx = utils.from_uint16_le( raw[si+2:si+4] )
                     si += 4
-                    print('di: {:04x}, dx: {:04x}'.format(di, bx))
+                    #print('di: {:04x}, dx: {:04x}'.format(di, bx))
                     # call the target func
                     new_reloc = win16.Relocation(reloc_base, parent=result )
                     new_reloc.detail_type = win16.RelocationDetail.IMPORT_NAME
@@ -405,26 +405,49 @@ def optloader_get_relocs( raw, relocs_offset, relocs_count ):
 
 
             elif src_type == 0x03:
-                print('RELOC_SRC_OSFLOAT')
-                # apparently not used???
-                return result 
-                #ax = utils.from_uint16_le( raw[si:si+2] ) & 0xff
-                #print('ax: {:02x}'.format(ax))
+                #print('RELOC_SRC_OSFLOAT')
+                ax = utils.from_uint16_le( raw[si:si+2] )
+                si += 2
+                for i in range( num_items ):
+                    di = utils.from_uint16_le( raw[si:si+2] )
+                    si += 2
+                    new_reloc = win16.Relocation(reloc_base, parent=result )
+                    new_reloc.detail_type = win16.RelocationDetail.OS_FIXUP
+                    new_reloc.offset = di
+                    new_reloc.detail = win16.RelocationOSFixup( parent=new_reloc )
+                    new_reloc.detail.fixup = win16.RelocationOSFixupType( ax )
+                    result.reltable.append( new_reloc )
+
+            else:
+                print('unknown src type? {:02x}'.format(src_type))
     return result
 
 
 
 def optloader_unpack( in_file ):
+    if in_file[0:2] != b'MZ':
+        raise ValueError( 'Input file is not a Win16 executable - MZ header missing' )
+    ne_offset = utils.from_uint16_le( in_file[0x3c:0x3e] )
+    if in_file[ne_offset:ne_offset+2] != b'NE':
+        raise ValueError( 'Input file is not a Win16 executable - NE header missing' )
+
     e = win16.EXE( in_file )
 
     unpacked = []
 
     # special treatment for segment 1, which unpacks itself
     seg1_raw = in_file[e.ne_header.segtable[0].offset:][:e.ne_header.segtable[0].size]
+    if seg1_raw[0x17f:0x1be] != b'OPTLOADER - Copyright (C) 1993 SLR Systems\nAll Rights Reserved\x00':
+        raise ValueError( 'Input file is not an OPTLOADER compressed executable' )
+
     seg1 = bytearray( e.ne_header.segtable[0].alloc_size )
     seg1[:len( seg1_raw )] = seg1_raw
-    optloader_precopy( seg1, start_offset=0x1E7, precopy_offset=0x9F1-0x68d+1, precopy_size=0x68d )
-    optloader_reverse( src=seg1, read_offset=0x9F1-0x68d+1, dest=seg1, write_offset=0x1E7 )
+
+    start_offset = utils.from_uint16_le( seg1[0x08:0x0a] )
+    precopy_size = utils.from_uint16_le( seg1[0x2e:0x30] )
+    alloc_size = e.ne_header.segtable[0].alloc_size
+    optloader_precopy( seg1, start_offset=start_offset, precopy_offset=alloc_size-precopy_size, precopy_size=precopy_size )
+    optloader_reverse( src=seg1, read_offset=alloc_size-precopy_size, dest=seg1, write_offset=start_offset )
 
     # patch out hints to use insane loader in the header
     #seg1[0x00:0x18] = b'\x00'*0x18
@@ -441,13 +464,6 @@ def optloader_unpack( in_file ):
         raw = in_file[seg.offset & 0xfffffe00:][:seg.size+predelta+postdelta]
         seg_out = bytearray( seg.alloc_size )
 
-        test_reloc = True
-        #if raw[0:8] == b'\xf8\xff\x11\x96\x19\xf2\x11\x9a': # seg107
-        #if raw[0:8] == b'\x0a\x48\x26\x8b\xc5\xcb\x91\x03': #e seg002
-        #    import pdb; pdb.set_trace()
-        #    test_reloc = True
-        #test_reloc = True
-
         start_offset = predelta
         relocs_count = utils.from_uint16_le( raw[start_offset:start_offset+2] )
         start_offset += 2
@@ -460,10 +476,6 @@ def optloader_unpack( in_file ):
     for i, x in enumerate( unpacked ):
         e.ne_header.segtable[i].segment.data = x[0]
         e.ne_header.segtable[i].iterated = 0
-        #if i == 0:
-        #    e.ne_header.segtable[i].relocations = 0
-        #    e.ne_header.segtable[i].segment.relocations = win16.NullRelocationTable()
-        #    e.ne_header.segtable[i].segment.data = b'\x00\x00\x00\x00'
         if x[1]:
             e.ne_header.segtable[i].relocations = 1
             e.ne_header.segtable[i].segment.relocations = x[1]
@@ -472,7 +484,7 @@ def optloader_unpack( in_file ):
     return e
 
 
-DESCRIPTION = 'Unpack an obfuscated Win16 executable packed by OPTLINK.'
+DESCRIPTION = 'Unpack an obfuscated Win16 executable packed by OPTLOADER.'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser( description=DESCRIPTION )
