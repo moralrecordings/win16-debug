@@ -24,13 +24,13 @@ def get_ldt( memory_map, base, limit ):
 # scrape a memory dump for an EXE's module table
 # basically, search for the EXE's full path, then check if there's an NE header attached
 def find_module_table( memory_map, app_path ):
-    MAX_LOOKBACK = 0x1000
+    MAX_LOOKBACK = 0x8000
     
     for base, mem in memory_map.items():
-        matches = [x for x in utils.find_all_iter( mem, app_path ) if mem[x-8] == len( app_path )+7 ]
+        matches = [x for x in utils.find_all_iter( mem, app_path )]
         for m in matches:
             lookback = m-MAX_LOOKBACK
-            ne_matches = [x for x in utils.find_all_iter( mem, b'NE', start=lookback, end=m ) if (x % 32) == 0]
+            ne_matches = [x + lookback for x in utils.find_all_iter( mem, b'NE', start=lookback, end=m ) if ((x + lookback) % 32) == 0]
             if ne_matches:
                 return base + ne_matches[-1]
     raise ValueError( 'Could not find a Win16 module table for {}'.format( app_path ) )
@@ -43,18 +43,20 @@ def get_module_table( memory_map, offset ):
 
 
 
-# should always be the same for win3.1?
-LDT_BASE, LDT_LIMIT = 0x80BAD000, 0x2FFF
-
 DESCRIPTION = 'Extract the Win16 segment table from a DOSBox memory dump.'
 EPILOG = """Windows 3.1 uses a single shared segment table for all programs. In order to use the DOSBox debugger, you will need to know the mapping from 16-bit selectors (as seen in the CS/DS registers) to each segment in the target EXE or DLL. This tool scrapes this mapping from DOSBox memory dumps taken with a running application. In addition, a guess is provided for the segment ID and fake 32-bit offset that IDA Pro would use.
 """
 
+auto_int = lambda s: int( s, base=0 )
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser( description=DESCRIPTION, epilog=EPILOG )
+    parser.add_argument( 'ldt_base', type=auto_int, help='Base address of the Local Descriptor Table: ("CPU" in the DOSBox debugger -> LDT base)' )
+    parser.add_argument( '--ldt_limit', type=auto_int, help='Limit of the Local Descriptor Table: ("CPU" in the DOSBox debugger -> LDT limit)', default=0x2fff, required=False )
     parser.add_argument( 'module_path', help='Full DOSBox path to the EXE or DLL (e.g. "C:\\\\WINDOWS\\\\PROGMAN.EXE")' )
-    parser.add_argument( 'mem_low', type=argparse.FileType( mode='rb' ), help='Memory dump of the low range: MEMDUMPBIN 0000 00000000 2000000' )
-    parser.add_argument( 'mem_high', type=argparse.FileType( mode='rb' ), help='Memory dump of the high range: MEMDUMPBIN 0000 80000000 1000000' )
+    parser.add_argument( 'mem_low', type=argparse.FileType( mode='rb' ), help='Memory dump of the low range: "MEMDUMPBIN 0000 00000000 2000000"' )
+    parser.add_argument( 'mem_high', type=argparse.FileType( mode='rb' ), help='Memory dump of the high range: "MEMDUMPBIN 0000 80000000 1000000"' )
     parser.add_argument( '--out_file', type=argparse.FileType( mode='w' ), help='Output JSON file for segment information (default: stdout)', required=False )
     args = parser.parse_args()
 
@@ -67,7 +69,7 @@ if __name__ == '__main__':
 
     # fish out the local descriptor table from the memory dump.
     # this is used by the x86 chip to map segment selectors to memory in protected mode.
-    ldt_dir = get_ldt( memory_map, LDT_BASE, LDT_LIMIT )
+    ldt_dir = get_ldt( memory_map, args.ldt_base, args.ldt_limit )
 
     # fish out the Win16 program's module table from the memory dump.
     # every Win16 app has one of these, which is very similar to the NE header
