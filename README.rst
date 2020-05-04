@@ -22,6 +22,7 @@ This tool scrapes this mapping from DOSBox memory dumps taken with a running app
 - In the debugger, type "MEMDUMPBIN 0000 00000000 2000000" and press Enter. A file called "MEMDUMP.BIN" will be created in the directory that DOSBox was executed from; rename this file to e.g. "memory_low.bin".
 - Repeat with "MEMDUMPBIN 0000 80000000 1000000". Rename this file to e.g. "memory_high.bin".
 - You can now run get_segtable.py:
+
   * First argument will be the base address to the LDT (in this case, 0x80B1B000).
   * Second argument will be the full Windows path to the executable, (e.g. "C:\\DIRECTOR\\DIRECTOR.EXE").
   * Third and fourth arguments will be the path of the two memory dump files (e.g. "./memory_low.bin" "./memory_high.bin")
