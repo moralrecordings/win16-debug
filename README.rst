@@ -32,7 +32,11 @@ convert_log.py
 
 CPU coverage logging for DOSBox has been `added as of revision 4318 <https://sourceforge.net/p/dosbox/patches/282/>`_.
 
-IDA Pro uses a fake 32-bit memory map to lay out 16-bit code. In order to use a CPU coverage map from DOSBox with Lighthouse, addresses need to be converted from seg:offset_16 format to module+offset_32. This tool converts CPU coverage logs from DOSBox to the Lighthouse expected format using the JSON segment map from get_segtable.py.
+IDA Pro uses a fake 32-bit memory map to lay out 16-bit code. In order to use a CPU coverage map from DOSBox with Lighthouse, addresses need to be converted from seg:offset_16 format to module+offset_32. 
+
+convert_log.py converts CPU coverage logs from DOSBox to the Lighthouse expected format using the JSON segment map from get_segtable.py. It also can make a human-readable version, annotating each address with the IDA equivalent. By default this tool will filter out any addresses which aren't part of the executable, but you can keep them if you like.
+
+Logging mode is extremely slow; the emulator writes a line of text to the file "LOGCPU.TXT" before executing every instruction. "LOGC 250000" will let the CPU execute for about 1 second. A recommended approach is to isolate the program action you wish to record, call "LOGC 250000" from the debugger, then set the action rolling. Keep calling "LOGC 250000" until the behaviour you want runs to completion.
 
 
 optloader.py
